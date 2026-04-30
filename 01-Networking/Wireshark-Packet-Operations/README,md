@@ -1,0 +1,99 @@
+---
+
+### Task 2: Statistics | Summary (Macro-level Traffic Analysis)
+การใช้งานฟีเจอร์ Statistics ใน Wireshark เพื่อรวบรวมข้อมูลเชิงสถิติและสร้างภาพรวมของเครือข่าย (Scope of Traffic) ซึ่งเป็นขั้นตอนสำคัญในการตั้งสมมติฐาน (Hypothesis) ก่อนเริ่มการสืบสวนเชิงลึก
+
+**1. Traffic Overview & Endpoints:**
+- **Methodology:** วิเคราะห์จุดเชื่อมต่อทั้งหมด (Endpoints) และการสนทนา (Conversations) เพื่อระบุคู่ขนานการสื่อสารที่มีปริมาณข้อมูลผิดปกติ
+- **Key Findings:** - ตรวจพบการสื่อสารผ่านโปรโตคอล IPv4 ทั้งหมด **435 Conversations**
+  - จากการตรวจสอบ Endpoint ระดับ Ethernet (MAC Address) พบอุปกรณ์ของ **Micro-Star INT (Micro-St)** มีการส่งข้อมูลออก (Tx Bytes) ปริมาณ **7474 bytes**
+
+**2. Name Resolution & GeoIP Mapping:**
+- **Methodology:** การแปลงที่อยู่ IP ให้เป็นข้อมูลที่มนุษย์อ่านเข้าใจง่าย (Human-readable) ผ่านการทำงานร่วมกับ DNS, AS Organizations และฐานข้อมูลภูมิศาสตร์ (GeoIP Database อย่าง MaxMind)
+- **Key Findings:**
+  - ระบุ IP Address ที่เชื่อมโยงกับ AS Organization "Blicnet" ได้คือ **`188.246.227.212`**
+  - ตรวจพบกลุ่ม IP Address จำนวน **4 รายการ** ที่มีตำแหน่งที่ตั้งทางภูมิศาสตร์เชื่อมโยงกับ **"Kansas City"**
+  - สกัดข้อมูลจาก Resolved Addresses เพื่อระบุ IP ของโดเมนเป้าหมายที่ขึ้นต้นด้วย "bbc" คือ **`199.232.24.81`**
+
+**3. Analyst Technique (Optimization):**
+- **Methodology:** ใช้งานฟีเจอร์ `Limit to display filter` ร่วมกับหน้าต่าง Statistics เพื่อลดปริมาณข้อมูลรบกวน (Noise Reduction) ทำให้สามารถโฟกัสเฉพาะ Traffic หรือ Endpoint ที่ตรงกับเงื่อนไขการกรอง (Display Filter) บนหน้าต่างหลักได้อย่างรวดเร็ว
+
+(assets/2.png)
+
+---
+
+### Task 3: Protocol-Specific Statistics (IPv4, DNS, HTTP)
+การวิเคราะห์เชิงสถิติแยกตามประเภทโปรโตคอลเพื่อค้นหาความผิดปกติในระดับ Network, Application และการตอบสนองของระบบ (Response Time)
+
+**1. IPv4 Traffic Distribution:**
+- **Methodology:** ใช้เมนู `IPv4 Statistics --> Destinations and Ports` เพื่อวิเคราะห์ปริมาณการติดต่อสื่อสารไปยังปลายทางต่างๆ
+- **Key Findings:** ตรวจพบ IP ปลายทางที่มีการติดต่อหนาแน่นที่สุด (Most Used) คือ **`10.100.1.33`** ซึ่งเป็นข้อมูลสำคัญในการระบุจุดศูนย์กลางของทราฟฟิกในเครือข่าย
+
+**2. DNS Service Analysis:**
+- **Methodology:** ตรวจสอบประสิทธิภาพและพฤติกรรมการเรียกใช้ชื่อโดเมนผ่าน `Statistics --> DNS` โดยเน้นที่ Service Stats
+- **Key Findings:** พบค่าเวลาตอบสนองสูงสุด (Max Service Request-Response Time) อยู่ที่ **`0.467897` วินาที** ซึ่งใช้ในการประเมินความหน่วงของระบบเนมเซิร์ฟเวอร์หรือการทำ DNS Amplification Attack ในบางกรณี
+
+**3. HTTP Load Distribution:**
+- **Methodology:** วิเคราะห์ภาระงานและพฤติกรรมการเข้าถึงเว็บไซต์ผ่าน `Statistics --> HTTP --> Load Distribution` เพื่อดูปริมาณการร้องขอ (Requests) ต่อโดเมนเฉพาะเจาะจง
+- **Key Findings:** ตรวจพบโดเมน **`rad.msn.com`** มีการส่ง HTTP Requests สำเร็จทั้งหมดจำนวน **39 ครั้ง** แสดงถึงพฤติกรรมการสื่อสารซ้ำๆ ของแอปพลิเคชันหรือเซอร์วิสบนเครื่องเป้าหมาย
+
+(assets/3.png)
+
+---
+
+### Task 4: Packet Filtering Principles (Capture vs. Display Filters)
+การทำความเข้าใจสถาปัตยกรรมและโครงสร้างไวยากรณ์ (Syntax) ของตัวกรองแพ็กเก็ตใน Wireshark ซึ่งเป็นทักษะที่จำเป็นที่สุดในการลดระยะเวลาสืบสวน (Investigation Time) และคัดกรองข้อมูลรบกวน (Noise) ออกจาก Traffic จริง
+
+**1. Filter Types & Implementation:**
+- **Capture Filters:** ใช้สำหรับการกรองข้อมูล "ก่อน" การบันทึกลงดิสก์ (อ้างอิงตาม BPF Syntax) เพื่อลดภาระการประมวลผลและประหยัดพื้นที่จัดเก็บข้อมูล มักใช้ในระดับ Network Sniffing 
+- **Display Filters:** ใช้สำหรับการกรองข้อมูล "หลัง" จากที่บันทึกมาแล้ว (Post-capture Analysis) เป็นฟีเจอร์หลักในการทำ Incident Response เนื่องจากรองรับโปรโตคอลมากกว่า 3,000 ชนิด และสามารถปรับเปลี่ยนเงื่อนไขระหว่างการวิเคราะห์ได้โดยไม่สูญเสียข้อมูลต้นฉบับ
+
+**2. Syntax & Logical Expressions:**
+- **Comparison Operators:** รองรับการใช้ตัวดำเนินการเปรียบเทียบมาตรฐาน (เช่น `==`, `!=`, `>`, `<`) เพื่อเจาะจงค่าพารามิเตอร์ในแต่ละชั้นของโปรโตคอล
+- **Boolean Logic:** สามารถผสมผสานเงื่อนไขที่ซับซ้อนด้วย Logical Operators (`&&`, `||`, `!`) เช่น การค้นหาการสื่อสารที่มาจาก IP ต้นทางที่เจาะจง **และ** ใช้พอร์ตที่ผิดปกติ
+
+**3. Filter Toolbar Indicators:**
+- เข้าใจระบบแจ้งเตือนสถานะไวยากรณ์ (Syntax Validation) ของ Wireshark ผ่านสีของแถบ Filter:
+  - 🟢 **Green:** ไวยากรณ์ถูกต้องพร้อมใช้งาน (Valid)
+  - 🔴 **Red:** ไวยากรณ์ผิดพลาด (Invalid syntax / Unknown protocol)
+  - 🟡 **Yellow:** ไวยากรณ์ทำงานได้แต่อาจให้ผลลัพธ์ที่ไม่แม่นยำ (Unreliable/Deprecated)
+
+**Conclusion:** การแยกความแตกต่างระหว่าง Capture และ Display Filter รวมถึงการเขียน Query ด้วย Boolean Logic อย่างถูกต้อง เป็นพื้นฐานสำคัญที่ช่วยให้ Analyst สามารถเจาะจงค้นหา Indicator of Compromise (IoC) ในไฟล์ Pcap ขนาดใหญ่ได้อย่างรวดเร็วและแม่นยำ
+
+---
+
+### Task 5: Packet Filtering | Protocol Filters
+การประยุกต์ใช้ Display Filters เพื่อคัดกรองข้อมูลในระดับ Network, Transport และ Application Layer ซึ่งเป็นทักษะหลัก (Core Skill) ในการทำ Incident Response เพื่อค้นหาความผิดปกติ (Anomalies) และพฤติกรรมที่น่าสงสัยในระบบเครือข่าย
+
+**1. Network Layer Analysis (IP):**
+- **Methodology:** คัดกรองเฉพาะโปรโตคอล IP (`ip`) เพื่อตัดทราฟฟิกรบกวนในชั้น Data Link Layer (เช่น ARP) ออก พบทราฟฟิกทั้งสิ้น **81,420 packets**
+- **Evasion Detection:** ตรวจสอบแพ็กเก็ตที่มีค่า Time to Live (TTL) ต่ำผิดปกติด้วยคำสั่ง `ip.ttl < 10` พบ **66 packets** ซึ่งอาจบ่งชี้ถึงความพยายามในการทำ Network Mapping หรือการใช้เทคนิค Evasion เพื่อหลบเลี่ยงการตรวจจับของ NIDS/NIPS
+
+**2. Transport Layer Analysis (TCP/UDP):**
+- **Malicious Port Hunting:** ใช้คำสั่ง `tcp.port == 4444` ในการค้นหาการสื่อสารบนพอร์ตอันตราย (พอร์ต 4444 เป็น Default Port ที่นิยมใช้สร้าง Reverse Shell ด้วยเครื่องมืออย่าง Metasploit) พบทราฟฟิกเชื่อมต่อทั้งหมด **632 packets** ซึ่งเป็น Indicator of Compromise (IoC) ที่สำคัญ
+
+**3. Application Layer Analysis (HTTP & DNS):**
+- **Cleartext Web Traffic:** ค้นหาพฤติกรรมการดึงข้อมูลหน้าเว็บแบบไม่เข้ารหัส โดยใช้ Logical Operator (`&&`) ผสมเงื่อนไข `http.request.method == "GET" && tcp.dstport == 80` พบการทำรายการ **527 ครั้ง**
+- **DNS Query Filtering:** วิเคราะห์คำขอแปลงชื่อโดเมนเป็น IPv4 (Type A) ด้วยเงื่อนไข `dns.qry.type == 1`
+  - *Analytical Note:* ในการสืบสวนจริง การคัดแยกแพ็กเก็ตระหว่าง "คำถาม (Query)" และ "คำตอบ (Response)" จะมีความสำคัญมาก โดยสามารถเพิ่มเงื่อนไข `dns.flags.response == 0` เพื่อดูเฉพาะคำขอ หรือ `== 1` เพื่อดูคำตอบที่ได้รับกลับมา เพื่อวิเคราะห์พฤติกรรม Malware Beaconing หรือ DGA (Domain Generation Algorithms) ได้อย่างแม่นยำ
+
+(assets/5.png)
+
+---
+
+### Task 6: Advanced Filtering (Deep Packet Inspection & Regex)
+การยกระดับการวิเคราะห์แพ็กเก็ต (Deep Packet Inspection - DPI) โดยใช้ฟังก์ชันระดับสูงและ Regular Expression (Regex) เพื่อค้นหา Indicator of Compromise (IoC) ที่ถูกซ่อนหรือปรับเปลี่ยนรูปแบบ (Obfuscation) รวมถึงการปรับแต่ง Workflow เพื่อเพิ่มความเร็วในการสืบสวน
+
+**1. Advanced String & Regex Matching:**
+- **Methodology:** ประยุกต์ใช้ Operator `contains` สำหรับการค้นหาคำเฉพาะ (Sub-string search) และ `matches` สำหรับการค้นหาด้วยเงื่อนไข Regex 
+- **Key Findings:** - สามารถสืบหาเซิร์ฟเวอร์เป้าหมายที่ไม่ได้ใช้พอร์ตมาตรฐานด้วยคำสั่ง `http.server contains "IIS" && tcp.srcport != 80`
+  - ตรวจพบการสื่อสารบนกลุ่มพอร์ตที่ต้องสงสัยพร้อมกันในคำสั่งเดียวผ่าน Set Membership: `tcp.port in {3333 4444 9999}` ตรวจพบทราฟฟิกจำนวน **2,235 packets**
+
+**2. Data Type Conversion & Function Manipulation:**
+- **Methodology:** ใช้ฟังก์ชันแปลงชนิดข้อมูล (Type Casting) เพื่อทลายข้อจำกัดของการค้นหา เช่น การใช้ `string()` แปลงค่า Integer ให้รองรับการทำ Regex หรือการใช้ `lower()`/`upper()` เพื่อป้องกันการหลบเลี่ยงแบบ Case-shifting
+- **Key Findings:** ประยุกต์ใช้ Regex เพื่อหาค่า TTL ที่เป็นเลขคู่ (Even TTLs) ด้วยคำสั่ง `string(ip.ttl) matches "[02468]$"` ตรวจพบทราฟฟิกจำนวน **77,289 packets** **3. Workflow Optimization & Protocol Profiling:**
+- **Methodology:** การลดระยะเวลา MTTR (Mean Time to Respond) ด้วยการสร้าง Filter Buttons สำหรับคำสั่งที่ใช้บ่อย และการจัดกลุ่ม Configuration Profiles ให้เหมาะสมกับประเภทการสืบสวน
+- **Analytical Note (Checksum vs. Hash):** จากการทดสอบสลับ Profile เป็น "Checksum Control" ตรวจพบ `Bad TCP Checksum` จำนวน **34,185 packets** ซึ่งผ่านการวิเคราะห์แล้วว่าไม่ได้เกิดจาก Data Corruption หรือการโจมตีทางไซเบอร์ แต่เป็นผลจากการทำงานของฟีเจอร์ **Checksum Offloading** บน Network Interface Card (NIC) ที่ผลักภาระการคำนวณ Checksum ออกจาก OS
+
+(assets/6.png)
+---
