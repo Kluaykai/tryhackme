@@ -1,0 +1,37 @@
+# 🚀 Introduction to SOAR (Security Orchestration, Automation, and Response)
+
+A foundational guide summarizing the concepts of SOAR, a critical toolset used by modern Security Operations Centers (SOC) to streamline incident response and combat alert fatigue.
+
+## ⚠️ Challenges in Traditional SOCs
+Before SOAR, SOC analysts faced several major pain points:
+* **Alert Fatigue:** Being overwhelmed by thousands of alerts, many of which are false positives, causing analysts to burn out or miss real threats.
+* **Disconnected Tools:** Wasting time switching between multiple screens and vendors (SIEM, EDR, Firewall, IAM).
+* **Manual Processes:** Relying on undocumented "tribal knowledge" to handle repetitive tasks.
+
+## 🛠️ The 3 Core Pillars of SOAR
+SOAR acts as the "brain" that connects everything together.
+
+1.  **Orchestration (การประสานงาน):**
+    * Connecting and integrating multiple, disparate security tools (from different vendors) into a single, unified interface. 
+    * *Example:* Connecting the SIEM, Threat Intel Platform, and Firewall together.
+2.  **Automation (การทำอัตโนมัติ):**
+    * Executing repetitive, predefined actions across these tools without requiring manual clicks from a human analyst.
+    * *Example:* Automatically checking an IP's reputation on VirusTotal when an alert triggers.
+3.  **Response (การตอบสนอง):**
+    * Taking action directly from the SOAR platform based on the automated analysis.
+    * *Example:* Blocking a malicious IP on the firewall or disabling a compromised user account in IAM.
+
+## 📜 What is a Playbook?
+A **Playbook** is a predefined list of actions or a workflow designed to handle a specific type of incident (e.g., Phishing, VPN Brute Force, CVE Patching). 
+* It acts like a flowchart: *"If this happens -> do X. Else -> do Y."*
+* While playbooks automate the bulk of the work, **manual analysis** is still vital for critical decision-making (like deleting case tickets or isolating a server).
+
+## 🧑‍💻 Do We Still Need SOC Analysts?
+**Yes! (Yay!)** SOAR reduces the burden of repetitive, manual processes, but human analysts remain essential for:
+* Making crucial judgment calls in complex investigations.
+* Understanding the broader business context of a threat.
+* Developing and maintaining the Playbooks and Custom Rules.
+
+---
+**Compiled by:** Piyangkoon (Frame) Tongrujiroj
+**Focus:** SOC Analyst Foundation / SOAR / Incident Response
